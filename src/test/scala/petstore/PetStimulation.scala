@@ -48,13 +48,13 @@ class PetStimulation extends Simulation {
       //atOnceUsers(1)
     )
   ).protocols(httpProtocol)
-    //.assertions(
+    .assertions(
       //Assertion to check that Max Response time doesn't exceed 300 Milliseconds
-     // global.responseTime.max.lt(300),
+      global.responseTime.max.lt(300),
       //Assertion to validate if all Requests are successful or not
-      //global.successfulRequests.percent.is(100),
+      global.successfulRequests.percent.is(100),
       //Assertion to validate if 120 requests were processed in a minute. i.e. 20 requests in 10 seconds
-  //    global.allRequests.count.is(120))
-  //)
+      global.allRequests.count.is(120)
+     )
 
 }
