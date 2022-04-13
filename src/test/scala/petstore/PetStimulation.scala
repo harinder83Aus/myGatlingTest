@@ -43,18 +43,19 @@ class PetStimulation extends Simulation {
   //** Setup for a Basic Load Scenario**//
   setUp(
     scn.inject(
-    //**Injecting a Constant Concurrent Load of 10 users for 1 minute**//
-      constantConcurrentUsers(10).during(1 minutes)
+    //**Injecting a Constant Concurrent Load of 5 users for 1 minute**//
+      constantConcurrentUsers(2).during(10 seconds)
       //atOnceUsers(1)
     )
   ).protocols(httpProtocol)
     .assertions(
-      //Assertion to check that Max Response time doesn't exceed 300 Milliseconds
-      global.responseTime.max.lt(300),
+      //Assertion to check that Average Response time doesn't exceed 300 Milliseconds
+      //global.responseTime.max.lt(300),
+      global.responseTime.mean.lte(300),
       //Assertion to validate if all Requests are successful or not
       global.successfulRequests.percent.is(100),
       //Assertion to validate if 120 requests were processed in a minute. i.e. 20 requests in 10 seconds
-      global.allRequests.count.is(120)
+      global.allRequests.count.gte(20)
      )
 
 }
