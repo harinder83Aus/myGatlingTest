@@ -1,11 +1,13 @@
 package petstore
 
 import scala.concurrent.duration._
-
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.jdbc.Predef._
+import org.checkerframework.checker.units.qual.Length
+
 import scala.language.postfixOps
+import scala.util.Random
 
 class PetStimulation extends Simulation {
 
@@ -28,34 +30,64 @@ class PetStimulation extends Simulation {
     "TE" -> "trailers"
   )
 
-  //*Pet Stimulation Scenario Definition*//
+  //** 14/4/ 22 --Code block to use CSV file as input **//
 
-  private val scn = scenario("PetStimulation")
-    .exec(
-      http("AddPet_Transaction")
-        .post("/v2/pet")
-        .headers(headers_0)
-        .body(RawFileBody("C:\\Users\\harinder.singh\\myGatlingTest\\src\\test\\resources/0000_request.json"))
-        //Check HTTP Server Response
-        .check(status.is(200))
-    )
+    val csvFeeder = csv("data/inputFile.csv").circular
 
-  //** Setup for a Basic Load Scenario**//
-  setUp(
-    scn.inject(
-    //**Injecting a Constant Concurrent Load of 5 users for 1 minute**//
-      constantConcurrentUsers(2).during(10 seconds)
-      //atOnceUsers(1)
-    )
-  ).protocols(httpProtocol)
-    .assertions(
-      //Assertion to check that Average Response time doesn't exceed 300 Milliseconds
-      //global.responseTime.max.lt(300),
-      global.responseTime.mean.lte(300),
-      //Assertion to validate if all Requests are successful or not
-      global.successfulRequests.percent.is(100),
-      //Assertion to validate if 120 requests were processed in a minute. i.e. 20 requests in 10 seconds
-      global.allRequests.count.gte(20)
-     )
+    def CreatePet() = {
+      repeat(20) {
+        feed(csvFeeder)
+          .exec(http("AddPet_Transaction")
+            .post("/v2/pet")
+            .headers(headers_0)
+            .body(StringBody(
+              """
+             {
+               "id":  ${petid},
+               "category": {
+                 "id":  ${petid},
+                 "name": "string"
+               },
+               "name":  "${petname}",
+               "photoUrls": [
+               "string"
+               ],
+               "tags": [
+               {
+                 "id":  ${petid},
+                 "name": "string"
+               }
+               ],
+               "status": "available"
+               }""")).asJson
+            .check(status.is(200)))
+             /*Exit Test execution if HTTP status is not HTTP 200*/
+            .exitHereIfFailed
+      }
+    }
 
-}
+    private val scn = scenario("PetStimulation")
+      .exec(
+        CreatePet())
+
+    //**Code block ends here**//
+
+    //** Setup for a Basic Load Scenario**//
+    setUp(
+      scn.inject(
+        //**Injecting a Constant Concurrent Load of 2 users for 10 seconds**//
+        constantConcurrentUsers(1).during(10 seconds)
+        //atOnceUsers(1)
+      )
+    ).protocols(httpProtocol)
+      .assertions(
+        //**Three assertions as per the Requirement*//
+        //**Assertion 1: Check that Average Response time doesn't exceed 300 Milliseconds**//
+        global.responseTime.mean.lte(300),
+        //**Assertion 2: Validate whether all Requests are successful or not**//
+        global.successfulRequests.percent.is(100),
+        //**Assertion 3: Validate if 20 requests were processed in 10 seconds or not**//
+        global.allRequests.count.gte(20)
+      )
+
+  }
